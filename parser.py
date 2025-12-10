@@ -194,7 +194,6 @@ def test_parse_increment_prefix():
     """
     print("testing parse_increment_prefix...")
     ast, tokens = parse_increment_prefix(tokenize("++1"))
-
     assert ast == {
         "tag": "increment_prefix",
         "value": {"tag": "number", "value": 1},
@@ -204,6 +203,18 @@ def test_parse_increment_prefix():
     assert ast == {
         "tag": "increment_prefix",
         "value": {"tag": "identifier", "value": "x"},
+    }
+
+    ast, tokens = parse_increment_prefix(tokenize("++abc"))
+    assert ast == {
+        "tag": "increment_prefix",
+        "value": {"tag": "identifier", "value": "abc"},
+    }
+
+    ast, tokens = parse_increment_prefix(tokenize("++3354"))
+    assert ast == {
+        "tag": "increment_prefix",
+        "value": {"tag": "identifier", "value": "3354"},
     }
 
 #######################################ADDING DECREMENT PREFIX########################################################
@@ -238,6 +249,18 @@ def test_parse_decrement_prefix():
     assert ast == {
         "tag": "decrement_prefix",
         "value": {"tag": "identifier", "value": "x"},
+    }
+
+    ast, tokens = parse_decrement_prefix(tokenize("--abc"))
+    assert ast == {
+        "tag": "decrement_prefix",
+        "value": {"tag": "identifier", "value": "abc"},
+    }
+
+    ast, tokens = parse_decrement_prefix(tokenize("--3354"))
+    assert ast == {
+        "tag": "decrement_prefix",
+        "value": {"tag": "identifier", "value": "3354"},
     }
 
 ##############################################################################################  
@@ -1236,32 +1259,36 @@ def test_parse_switch_statement():
     """
     switch_statement = "switch" "(" expression ")" "{" { "case" "(" expression ")" ":" statement_list } [ "default" ":" statement_list ] "}"
     """
-    print("testing parse_switch_statement...")
-    ast = parse_switch_statement(tokenize("switch(1234){case (1234):{print 1234}case (2345):{print 2345}default:{print 3456}}"))[0]
-    assert ast == {
+    print("Testing switch-case")
+    ast = parse_switch_statement(tokenize("switch(1234){case (1234):{print 12345;}case (2345):{print 2345;}default:{print 3456;}}"))[0]
+    assert ast == { 
         "tag": "switch",
         "switch": {"tag": "number", "value": 1234},
-        "case_values": [
-            {"tag": "number", "value": 1234},
-            {"tag": "number", "value": 2345},
-        ],
-        "case_stmts": [
-            {
-                "tag": "statement_list",
-                "statements": [{"tag": "print", "value": {"tag": "number", "value": 1234}}],
-            },
-            {
-                "tag": "statement_list",
-                "statements": [{"tag": "print", "value": {"tag": "number", "value": 2345}}],
-            },
-        ],
-        "default_stmts": {
-            "tag": "statement_list",
-            "statements": [{"tag": "print", "value": {"tag": "number", "value": 3456}}],
-        },
+        "case_values": [{"tag": "number", "value": 1234}, {"tag": "number", "value": 2345} ],
+        "case_stmts": [{"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 12345}}]},
+                        {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 2345}}]} ],
+        "default_stmts": {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 3456}}]} 
+    }
+    ast = parse_switch_statement(tokenize("switch(34){case (23453):{print 123;}case (3354):{print 234;}default:{print 345;}}"))[0]
+    assert ast == { 
+        "tag": "switch",
+        "switch": {"tag": "number", "value": 34},
+        "case_values": [ {"tag": "number", "value": 23453}, {"tag": "number", "value": 3354} ],
+        "case_stmts": [ {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 123}}]},
+                        {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 234}}]} ],
+        "default_stmts": {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 345}}]} 
     }
 
-###############################################################################################
+    ast = parse_switch_statement(tokenize("switch(amitha){case (aaaaaaa):{print 123;}case (amitha):{print 234;}default:{print 345;}}"))[0]
+    assert ast == { 
+        "tag": "switch",
+        "switch": {"tag": "identifier", "value": "amitha"},
+        "case_values":[ {"tag": "identifier", "value": "aaaaaaa"}, {"tag": "identifier", "value": "amitha"} ],
+        "case_stmts": [ {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 123}}]},
+                        {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 234}}]} ],
+        "default_stmts": {"tag": "statement_list", "statements": [{"tag": "print", "value": {"tag": "number", "value": 345}}]}
+    }
+       ###########################################################################
 
 def parse_while_statement(tokens):
     """
