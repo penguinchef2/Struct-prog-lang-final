@@ -27,6 +27,8 @@ patterns = [
     [r"not", "!"],  # alternate for !
     [r"assert", "assert"],
     [r"[a-zA-Z_][a-zA-Z0-9_]*", "identifier"],  # identifiers
+    [r"\+\+", "++"], #increment operatoe ################
+    [r"\-\-", "--"], #decrement operator ################
     [r"\+", "+"],
     [r"\-", "-"],
     [r"\*", "*"],
@@ -115,6 +117,22 @@ def tokenize(characters, generated_tags=test_generated_tags):
 
     tokens.append({"tag": None, "position": position, "line":line})
     return tokens
+
+def test_increment():
+    print("Testing increment operator")
+    t = tokenize("++a")
+    assert len(t) == 3
+    assert t[0]["tag"] == "++"
+    assert t[1]["tag"] == "identifier"
+    assert t[1]["value"] == "a"
+
+def test_decrement():
+    print("Testing decrement operator")
+    t = tokenize("--a")
+    assert len(t) == 3
+    assert t[0]["tag"] == "--"
+    assert t[1]["tag"] == "identifier"
+    assert t[1]["value"] == "a"
 
 
 def test_simple_tokens():
@@ -306,6 +324,8 @@ def test_ternary_tokens():
 
 if __name__ == "__main__":
     print("testing tokenizer.")
+    test_increment()
+    test_decrement()
     test_simple_tokens()
     test_number_tokens()
     test_string_tokens()

@@ -271,6 +271,41 @@ def evaluate(ast, environment):
             assert right_value != 0, "Modulo using zero"
             return left_value % right_value, None
         raise Exception(f"Illegal types for {ast['tag']}:{types}")
+    
+    ################################added increment prefix########################################
+    if ast["tag"] == "increment_prefix":
+        value, status = evaluate(ast["value"], environment) 
+        if status == "exit": return value, "exit"
+
+        target = ast["value"] #finding target = value of ast
+
+        #checking if identifier
+        if target["tag"] == "identifier": #checking if the tag of value is identifier
+            id_value = target["value"] 
+            environment[id_value] = value + 1  #adding 1 in environment to increment
+            return environment[id_value], None 
+        
+        #checking if number
+        types = type_of(value) #getting type of value
+        if types == "number":
+            return value + 1, None 
+    
+#####################################decrement#########################################################
+    if ast["tag"] == "decrement_prefix":
+        value, status = evaluate(ast["value"], environment)
+        if status == "exit": return value, "exit"
+
+        target = ast["value"]#finding target = value of ast
+
+        if target["tag"] == "identifier": #checking if the tag of value is identifier
+            id_value = target["value"]
+            environment[id_value] = value - 1  #subtracting 1 in environment to decrement
+            return environment[id_value], None
+
+        types = type_of(value) #getting type of value
+        if types == "number":
+            return value - 1, None
+##############################################################################################################
 
     if ast["tag"] == "negate":
         value, status = evaluate(ast["value"], environment)
@@ -673,11 +708,24 @@ def test_evaluate_division():
     equals("4/2", {}, 2, {})
     equals("8/4/2", {}, 1, {})
 
+def test_evaluate_increment_prefix():
+    print("test evaluate increment prefix")
+    equals("++a", {"a": 234}, 235, {"a": 235})
+    equals("++b", {"b": 455}, 456, {"b": 456})
+    equals("++2", {}, 3, {})  #testing number
+
+def test_evaluate_decrement_prefix():
+    print("test evaluate decrement prefix")
+    equals("--a", {"a": 1234}, 1233, {"a": 1233})
+    equals("--b", {"b": 4.55555}, 3.55555, {"b": 3.55555})
+    equals("--2", {}, 1, {})  #testing number
+
+
 
 def test_evaluate_negation():
     print("test evaluate negation")
     equals("-2", {}, -2, {})
-    equals("--3", {}, 3, {})
+    equals("-3", {}, -3, {}) #modifying to prevent interference with decrement
 
 
 def test_evaluate_print_statement():
@@ -1127,10 +1175,12 @@ if __name__ == "__main__":
     test_evaluate_subtraction()
     test_evaluate_multiplication()
     test_evaluate_division()
+    test_evaluate_increment_prefix() #ADDED TEST
+    test_evaluate_decrement_prefix() #ADDED TEST
     test_evaluate_negation()
     # test_evaluate_print_statement()
     test_evaluate_if_statement()
-    test_evaluate_switch_statement()
+    test_evaluate_switch_statement() #ADDED TEST
     test_evaluate_while_statement()
     test_evaluate_assignment_statement()
     test_evaluate_function_literal()
