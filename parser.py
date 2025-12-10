@@ -19,7 +19,9 @@ grammar = """
     function = "function" "(" [ identifier { "," identifier } ] ")" statements
 
     complex_expression = simple_expression { ("[" expression "]") | ("." identifier) | "(" [ expression { "," expression } ] ")" }
-
+    
+    increment_prefix = "++" identifier | <number> 
+    decrement_prefix = "--" identifier | <number>
     arithmetic_factor = complex_expression
     arithmetic_term = arithmetic_factor { ("*" | "/" | "%") arithmetic_factor }
     arithmetic_expression = arithmetic_term { ("+" | "-") arithmetic_term }
@@ -37,6 +39,7 @@ grammar = """
 
     if_statement = "if" "(" expression ")" statement_list [ "else" (if_statement | statement_list) ]
     switch_statement = "switch" "(" expression ")" "{" { "case" "(" expression ")" ":" statement_list } [ "default" ":" statement_list ] "}"
+    ternary_expression = logical_expression [ "?" expression ":" ternary_expression ]
     while_statement = "while" "(" expression ")" statement_list
     statement_list = "{" statement { ";" statement } "}"
     exit_statement = "exit" [ expression ]
@@ -71,6 +74,12 @@ def parse_simple_expression(tokens):
 
     if token["tag"] == "{":
         return parse_object(tokens)
+    
+    if token["tag"] == "++":
+        return parse_increment_prefix(tokens)
+    
+    if token["tag"] == "--":
+        return parse_decrement_prefix(tokens)
 
     if token["tag"] == "-":
         value, tokens = parse_simple_expression(tokens[1:])
@@ -134,11 +143,7 @@ def test_parse_simple_expression():
     ast, tokens = parse_simple_expression(tokenize("-1"))
     assert ast == {"tag": "negate", "value": {"tag": "number", "value": 1}}
 
-    ast, tokens = parse_simple_expression(tokenize("--2"))
-    assert ast == {
-        "tag": "negate",
-        "value": {"tag": "negate", "value": {"tag": "number", "value": 2}},
-    }
+    #removed --2 test to avoid decrement implementation conflict
 
     ast, tokens = parse_simple_expression(tokenize("!1"))
     assert ast == {"tag": "not", "value": {"tag": "number", "value": 1}}
@@ -166,6 +171,76 @@ def test_parse_simple_expression():
         },
     }
 
+###################################ADDING INCREMENT PREFIX PARSER#####################################
+
+def parse_increment_prefix(tokens):
+    """
+    increment_prefix = "++" identifier | <number> 
+    """
+    assert tokens[0]["tag"] == "++"
+    f"Expected '++' at position {tokens[0]['position']}"
+    tokens = tokens[1:]
+
+    if tokens[0]["tag"] == "number":
+        return {"tag": "increment_prefix", "value": {"tag": "number", "value": tokens[0]["value"]}}, tokens[1:]
+    
+    if tokens[0]["tag"] == "identifier":
+        return {"tag": "increment_prefix", "value": {"tag": "identifier", "value": tokens[0]["value"]}}, tokens[1:]
+
+#TESTING INCREMENT PREFIX 
+def test_parse_increment_prefix():
+    """
+    increment_prefix = "++" identifier | <number> 
+    """
+    print("testing parse_increment_prefix...")
+    ast, tokens = parse_increment_prefix(tokenize("++1"))
+
+    assert ast == {
+        "tag": "increment_prefix",
+        "value": {"tag": "number", "value": 1},
+    }
+
+    ast, tokens = parse_increment_prefix(tokenize("++x"))
+    assert ast == {
+        "tag": "increment_prefix",
+        "value": {"tag": "identifier", "value": "x"},
+    }
+
+#######################################ADDING DECREMENT PREFIX########################################################
+
+def parse_decrement_prefix(tokens):
+    """
+    decrement_prefix = "--" identifier | <number> 
+    """
+    assert tokens[0]["tag"] == "--"
+    f"Expected '--' at position {tokens[0]['position']}"
+    tokens = tokens[1:]
+
+    if tokens[0]["tag"] == "number":
+        return {"tag": "decrement_prefix", "value": {"tag": "number", "value": tokens[0]["value"]}}, tokens[1:]
+    
+    if tokens[0]["tag"] == "identifier":
+        return {"tag": "decrement_prefix", "value": {"tag": "identifier", "value": tokens[0]["value"]}}, tokens[1:]
+
+def test_parse_decrement_prefix():
+    """
+    decrement_prefix = "--" identifier | <number> 
+    """
+    print("testing parse_decrement_prefix...")
+    ast, tokens = parse_decrement_prefix(tokenize("--1"))
+
+    assert ast == {
+        "tag": "decrement_prefix",
+        "value": {"tag": "number", "value": 1},
+    }
+
+    ast, tokens = parse_decrement_prefix(tokenize("--x"))
+    assert ast == {
+        "tag": "decrement_prefix",
+        "value": {"tag": "identifier", "value": "x"},
+    }
+
+##############################################################################################  
 
 def parse_list(tokens):
     """
@@ -1583,6 +1658,8 @@ if __name__ == "__main__":
         test_parse_list,
         test_parse_object,
         test_parse_function,
+        test_parse_increment_prefix,
+        test_parse_decrement_prefix,
         test_parse_complex_expression,
         test_parse_arithmetic_factor,
         test_parse_arithmetic_term,
