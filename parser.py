@@ -211,10 +211,10 @@ def test_parse_increment_prefix():
         "value": {"tag": "identifier", "value": "abc"},
     }
 
-    ast, tokens = parse_increment_prefix(tokenize("++3354"))
+    ast, tokens = parse_increment_prefix(tokenize("++33"))
     assert ast == {
         "tag": "increment_prefix",
-        "value": {"tag": "identifier", "value": "3354"},
+        "value": {"tag": "number", "value": 33},
     }
 
 #######################################ADDING DECREMENT PREFIX########################################################
@@ -260,7 +260,7 @@ def test_parse_decrement_prefix():
     ast, tokens = parse_decrement_prefix(tokenize("--3354"))
     assert ast == {
         "tag": "decrement_prefix",
-        "value": {"tag": "identifier", "value": "3354"},
+        "value": {"tag": "number", "value": 3354},
     }
 
 ##############################################################################################  
@@ -1208,7 +1208,7 @@ def parse_switch_statement(tokens):
     tokens = tokens[1:]
     if tokens[0]["tag"] != "(": #check if next token is (
         raise Exception(f"Expected '(': {tokens[0]}")
-    value, tokens = parse_expression(tokens[1:]) #parse expression after (
+    switch_val, tokens = parse_expression(tokens[1:]) #parse expression after (
     if tokens[0]["tag"] != ")": #check if next token is )
         raise Exception(f"Expected ')': {tokens[0]}") 
     tokens = tokens[1:]
@@ -1223,27 +1223,24 @@ def parse_switch_statement(tokens):
         tokens = tokens[1:]
         if tokens[0]["tag"] != "(":
             raise Exception(f"Expected '(': {tokens[0]}")
-        tokens = tokens[1:]
-        case_state, tokens = parse_expression(tokens) #parse case state
-        case_value.append(case_state) #parse case value 
+        case_val, tokens = parse_expression(tokens[1:]) 
+        case_value.append(case_val) #add case statement
         if tokens[0]["tag"] != ")":
             raise Exception(f"Expected ')': {tokens[0]}")
         tokens = tokens[1:]
         if tokens[0]["tag"] != ":":
             raise Exception(f"Expected ':': {tokens[0]}")
-        tokens = tokens[1:]
-        stmt_value, tokens = parse_statement_list(tokens)
+        stmt_value, tokens = parse_statement_list(tokens[1:])
         case_stmts.append(stmt_value) #addidng statement value to statements
     if tokens[0]["tag"] != "default":
         raise Exception(f"Expected 'default': {tokens[0]}")
     tokens = tokens[1:]
     if tokens[0]["tag"] != ":": #check if next token is :
         raise Exception(f"Expected ':': {tokens[0]}")
-    tokens = tokens[1:]
-    default_stmts, tokens = parse_statement_list(tokens) #parsing default statement
+    default_stmts, tokens = parse_statement_list(tokens[1:]) 
     node = { #creating node
         "tag": "switch",
-        "switch": value, #switch value
+        "switch": switch_val, #switch value
         "case_values": case_value,
         "case_stmts": case_stmts,
         "default_stmts": default_stmts,
